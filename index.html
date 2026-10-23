@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="2026-10-23b">
+<meta name="app-version" content="2026-10-23e">
 <title>Chapter</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Your new chapter starts here. Reflection, growth, friends and me time.">
@@ -197,6 +197,9 @@ textarea{overflow:hidden}
 .brow .blab{flex:1 1 auto;min-width:0;font-family:var(--display);font-size:17px;padding-bottom:9px}
 .brow select{flex:none;width:auto;max-width:62%}
 .bd > .brow + .brow{margin-top:4px}
+.catch{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;background:var(--butter-soft);border:1px solid color-mix(in srgb,var(--butter) 35%,transparent);border-radius:16px;padding:14px 16px;margin-top:14px;font-size:16px}
+.catch .bt{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
+.welcome-back{text-align:center;font-family:var(--display);font-size:18px;color:var(--muted);margin:12px 0 0}
 .challenge{display:flex;gap:12px;align-items:flex-start}
 .challenge p{margin:0}
 .foot{text-align:center;color:var(--muted);font-size:14px;margin:22px 8px 0}
@@ -263,7 +266,7 @@ const LOCALE=(()=>{const l=navigator.language||"en-GB";return /^en/i.test(l)?l:"
 const blank=()=>({budget:null,miles:[],meta:{name:"",accent:"",currency:guessCurrency(),mods:{social:true,train:true,money:true,work:true,home:true},moves:["Yoga","Pilates","Running","Strength","Walk in the park","Walked to work"]},days:{},weeks:{},months:{},goals:{},wishes:[],home:[],finds:[]});
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))||blank();}catch(e){S=blank();}
-function normalize(){const b=blank();S=Object.assign(b,S);S.meta=Object.assign(b.meta,S.meta||{});S.meta.mods=Object.assign(blank().meta.mods,S.meta.mods||{});if(!Array.isArray(S.meta.moves))S.meta.moves=b.meta.moves;if(!Array.isArray(S.miles))S.miles=[];if(!S.meta.currency)S.meta.currency=guessCurrency();}
+function normalize(){const b=blank();S=Object.assign(b,S);S.meta=Object.assign(b.meta,S.meta||{});S.meta.mods=Object.assign(blank().meta.mods,S.meta.mods||{});if(!Array.isArray(S.meta.moves))S.meta.moves=blank().meta.moves;if(!Array.isArray(S.miles))S.miles=[];if(!S.meta.currency)S.meta.currency=guessCurrency();}
 normalize();
 let saveT,toastT;
 function save(quiet){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} if(!quiet)toast("Saved");}
@@ -369,6 +372,15 @@ function weekDots(){const m=monday(U.day),k=iso(U.day);let h="";
  for(let i=0;i<7;i++){const dt=addDays(m,i),dk=iso(dt),x=S.days[dk],fut=dt>today();const st=x&&x.closed?"full":filled(x)?"half":"";
  h+=`<button class="wd ${st} ${dk===k?"cur":""}" data-act="goday" data-v="${dk}" ${fut?"disabled":""} aria-label="${fmtShort(dt)}"><i></i><span>${DN2[i]}</span></button>`;}
  return `<div class="weekdots">${h}</div>`;}
+function catchUp(){
+ const k=iso(today());if(iso(U.day)!==k||filled(S.days[k]))return "";
+ const yk=iso(addDays(today(),-1)),y=S.days[yk];if(S.meta.skipCatch===yk)return "";
+ let last=null;for(let i=1;i<=60;i++){if(filled(S.days[iso(addDays(today(),-i))])){last=i;break;}}
+ if(last===null)return "";
+ if(last===1&&!y.closed)return `<div class="catch"><span>Yesterday wasn’t closed. Close it now?</span><div class="bt"><button class="btn small" data-act="catchup">Close yesterday</button><button class="link" data-act="skipcatch">Let it be</button></div></div>`;
+ if(last===2)return `<div class="catch"><span>You didn’t fill in yesterday. Take a minute, or let it be.</span><div class="bt"><button class="btn small" data-act="catchup">Fill in yesterday</button><button class="link" data-act="skipcatch">Let it be</button></div></div>`;
+ if(last>2)return `<p class="welcome-back">Welcome back. Let’s start with today.</p>`;
+ return "";}
 function vToday(){
  const k=iso(U.day),d=S.days[k]||{},isToday=k===iso(today());
  const part=U.part||(isToday&&new Date().getHours()<12&&!d.closed?"am":"pm");
@@ -378,8 +390,9 @@ function vToday(){
  `<div class="nav"><button class="icon-btn" data-act="day" data-v="-1" aria-label="Previous day">${chev(-1)}</button>
  <span class="grow">${isToday?"Five minutes a day":`<button class="link" data-act="gotoday">Back to today</button>`}</span>
  <button class="icon-btn" data-act="day" data-v="1" aria-label="Next day" ${isToday?"disabled":""}>${chev(1)}</button></div>
+ ${catchUp()}
  ${weekDots()}
- <div class="seg" role="group" aria-label="Morning or evening"><button class="${part==="am"?"on":""}" data-act="part" data-v="am">Morning</button><button class="${part==="pm"?"on":""}" data-act="part" data-v="pm">Evening${d.closed?" ✓":""}</button></div>`;
+ <div class="seg" role="group" aria-label="Morning or evening"><button class="${part==="am"?"on":""}" data-act="part" data-v="am">☀ Morning</button><button class="${part==="pm"?"on":""}" data-act="part" data-v="pm">☾ Evening${d.closed?" ✓":""}</button></div>`;
  if(part==="am"){
   const fromY=d.look===undefined&&lookFor(k);
   h+=`<p class="line">${lineFor(AM,k)}</p><div class="grid">
@@ -612,7 +625,7 @@ function openModal(h){document.getElementById("sheet").innerHTML=h;document.getE
 function closeModal(){document.getElementById("modal").classList.remove("open");}
 const steps=i=>`<div class="steps">${[0,1,2,3].map(j=>`<i class="${j===i?"on":""}"></i>`).join("")}</div>`;
 const modChips=()=>`<div class="chips">${MODS.map(([k,l])=>`<button class="chip ${M()[k]?"on":""}" data-act="mod" data-v="${k}" aria-pressed="${!!M()[k]}">${l}</button>`).join("")}</div>`;
-const moveChips=()=>{const pool=MOVE_POOL.concat(S.meta.moves.filter(m=>!MOVE_POOL.includes(m)));return `<div class="chips" style="--d:var(--pist)">${pool.map(m=>{const on=S.meta.moves.includes(m);return `<button class="chip ${on?"on":""}" data-act="mv" data-v="${esc(m)}" aria-pressed="${on}">${esc(m)}</button>`;}).join("")}</div><div class="add"><input type="text" id="mvIn" placeholder="Add your own activity" aria-label="Your own activity"><button class="btn small" data-act="mvadd">Add</button></div>`;};
+const moveChips=()=>{const pool=MOVE_POOL.concat(S.meta.moves.filter(m=>!MOVE_POOL.includes(m)));return `<div class="chips">${pool.map(m=>{const on=S.meta.moves.includes(m);return `<button class="chip ${on?"on":""}" data-act="mv" data-v="${esc(m)}" aria-pressed="${on}">${esc(m)}</button>`;}).join("")}</div><div class="add"><input type="text" id="mvIn" placeholder="Add your own activity" aria-label="Your own activity"><button class="btn small" data-act="mvadd">Add</button></div>`;};
 const swatches=()=>`<div class="swatches">${ACCENTS.map(([k,l,c])=>`<button class="sw ${S.meta.accent===k?"on":""}" style="background:${c}" data-act="accent" data-v="${k}" aria-label="${l}" aria-pressed="${S.meta.accent===k}"></button>`).join("")}</div>`;
 function welcome(i){U.ob.step=i=i||0;
  const body=[
@@ -702,6 +715,8 @@ document.addEventListener("click",e=>{
  case "findadd":{const t=document.getElementById("fT");if(!t.value.trim()){toast("Write what you found");t.focus();return;}S.finds.push({t:t.value.trim(),where:document.getElementById("fW").value.trim(),price:+document.getElementById("fP").value||0});save();render();return;}
  case "finddel":S.finds.splice(+v,1);save();render();return;
  case "range":U.range=+v;render();return;
+ case "catchup":U.day=addDays(today(),-1);U.part="pm";render();top();return;
+ case "skipcatch":S.meta.skipCatch=iso(addDays(today(),-1));save(true);render();return;
  case "offtoggle":{const d=dayData(k),wkend=[0,6].includes(U.day.getDay()),cur=d.off!==undefined?d.off:wkend;d.off=!cur;if(d.off)delete d.work;save();render();return;}
  case "badd":{const i=document.getElementById("bnew-"+v);if(i&&i.value.trim()){S.budget[v].push(row(i.value.trim(),""));save();render();const n=document.getElementById(`b-${v}-${S.budget[v].length-1}-a`);if(n)n.focus();}return;}
  case "bdel":{const[g,i]=v.split("|");S.budget[g].splice(+i,1);save();render();return;}
