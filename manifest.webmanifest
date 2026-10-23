@@ -1,0 +1,15 @@
+{
+  "name": "Chapter",
+  "short_name": "Chapter",
+  "description": "Your new chapter starts here. Reflection, growth, friends and me time.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#E9DCCB",
+  "theme_color": "#BC8370",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
